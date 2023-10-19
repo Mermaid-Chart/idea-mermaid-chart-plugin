@@ -1,4 +1,4 @@
-package com.example.mermaidchart.utils
+package co.tula.mermaidchart.utils
 
 import ai.grazie.utils.findAllMatches
 import com.intellij.openapi.util.TextRange

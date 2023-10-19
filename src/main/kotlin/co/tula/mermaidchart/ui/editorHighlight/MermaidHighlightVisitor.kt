@@ -1,8 +1,7 @@
-package com.example.mermaidchart.ui.editorHighlight
+package co.tula.mermaidchart.ui.editorHighlight
 
-import com.example.mermaidchart.ui.Icons
-import com.example.mermaidchart.utils.isMermaidLink
-import com.example.mermaidchart.utils.mermaidLinkRange
+import co.tula.mermaidchart.utils.isMermaidLink
+import co.tula.mermaidchart.utils.mermaidLinkRange
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -10,6 +9,7 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiElement
+import icons.Icons
 import java.awt.Color
 import java.awt.Font
 import javax.swing.Icon
@@ -19,15 +19,13 @@ class MermaidCommentAnnotator : Annotator {
         if (!element.isMermaidLink()) return
 
         val linkRange = element.mermaidLinkRange() ?: return
-        holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-            .range(linkRange)
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(linkRange)
             .enforcedTextAttributes(TextAttributes(null, Color(255, 71, 123, 77), null, EffectType.BOXED, Font.PLAIN))
-            .gutterIconRenderer(SideIconGutterRenderer(linkRange.startOffset))
-            .create()
+            .gutterIconRenderer(SideIconGutterRenderer(linkRange.startOffset)).create()
     }
 }
 
-private class SideIconGutterRenderer(private val rangeStart: Int): GutterIconRenderer() {
+private class SideIconGutterRenderer(private val rangeStart: Int) : GutterIconRenderer() {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is SideIconGutterRenderer) return false

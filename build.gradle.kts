@@ -4,13 +4,13 @@ plugins {
     id("org.jetbrains.intellij") version "1.15.0"
 }
 
-group = "com.example"
+group = "co.tula"
 version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
-// [MermaidChart: 5089868e-68e3-45cf-982a-21129803cb19]
+
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {

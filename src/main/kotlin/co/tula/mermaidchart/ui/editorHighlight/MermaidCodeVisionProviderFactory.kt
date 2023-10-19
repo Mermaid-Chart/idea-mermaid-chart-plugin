@@ -1,8 +1,8 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.example.mermaidchart.ui.editorHighlight
+package co.tula.mermaidchart.ui.editorHighlight
 
-import com.example.mermaidchart.utils.isMermaidLink
+import co.tula.mermaidchart.utils.isMermaidLink
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
