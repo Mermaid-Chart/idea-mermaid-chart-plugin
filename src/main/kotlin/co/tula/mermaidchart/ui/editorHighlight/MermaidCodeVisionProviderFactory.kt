@@ -2,7 +2,7 @@
 
 package co.tula.mermaidchart.ui.editorHighlight
 
-import co.tula.mermaidchart.utils.isMermaidLink
+import co.tula.mermaidchart.utils.mermaidLinkRange
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 
-// [MermaidChart: 5089868e-68e3-45cf-982a-21129803cb19]
 class MermaidCodeVisionProviderFactory : CodeVisionProviderFactory {
     override fun createProviders(project: Project): Sequence<CodeVisionProvider<*>> {
         return sequenceOf(MermaidActionCodeVisionViewProvider(), MermaidActionCodeVisionEditProvider())
@@ -38,17 +37,16 @@ class MermaidActionCodeVisionViewProvider : CodeVisionProvider<Unit> {
             val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
                 ?: return@runReadAction CodeVisionState.NotReady
 
-            val length = editor.document.textLength
-
             val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
             val traverser = SyntaxTraverser.psiTraverser(file)
             for (element in traverser.preOrderDfsTraversal()) {
-                if (!element.isMermaidLink()) continue
+                val linkRanges = element.mermaidLinkRange()
 
-                val textRange = element.safeRange(length)
                 val viewEntry = makeEntry("View Diagram", id)
-                lenses.add(textRange to viewEntry)
+                linkRanges.forEach { linkRange ->
+                    lenses.add(linkRange to viewEntry)
+                }
             }
             return@runReadAction CodeVisionState.Ready(lenses)
         }
@@ -74,17 +72,16 @@ class MermaidActionCodeVisionEditProvider : CodeVisionProvider<Unit> {
             val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
                 ?: return@runReadAction CodeVisionState.NotReady
 
-            val length = editor.document.textLength
-
             val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
 
             val traverser = SyntaxTraverser.psiTraverser(file)
             for (element in traverser.preOrderDfsTraversal()) {
-                if (!element.isMermaidLink()) continue
+                val linkRanges = element.mermaidLinkRange()
 
-                val textRange = element.safeRange(length)
                 val editEntry = makeEntry("Edit Diagram", id)
-                lenses.add(textRange to editEntry)
+                linkRanges.forEach { linkRange ->
+                    lenses.add(linkRange to editEntry)
+                }
             }
             return@runReadAction CodeVisionState.Ready(lenses)
         }

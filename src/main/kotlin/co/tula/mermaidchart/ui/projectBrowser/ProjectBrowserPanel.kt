@@ -1,12 +1,24 @@
 package co.tula.mermaidchart.ui.projectBrowser
 
+import co.tula.mermaidchart.utils.CommentUtils
+import com.intellij.lang.Commenter
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileTypes.impl.AbstractFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.templateLanguages.MultipleLangCommentProvider
+import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.treeStructure.Tree
 import java.awt.BorderLayout
 import java.awt.event.MouseAdapter
@@ -21,12 +33,16 @@ class ProjectBrowserPanel(
         val browser = Tree(buildTree())
         val clickListener = DocumentClickListener(browser) {
 
-            val link = "// [MermaidChart: $it]"
 
             val editor = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.editor
                 ?: return@DocumentClickListener
 
+            val psiFile = PsiManager.getInstance(project).findFile(editor.virtualFile)
+
+            val link = "${CommentUtils.getCommentPrefix(psiFile, editor)} [MermaidChart: $it]"
+
             val document = editor.document
+
             val currentLine = document.getLineNumber(editor.caretModel.offset)
             val currentLineRange =
                 TextRange(document.getLineStartOffset(currentLine), document.getLineEndOffset(currentLine))
