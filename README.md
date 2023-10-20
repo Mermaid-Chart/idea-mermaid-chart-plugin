@@ -1,0 +1,1 @@
+# idea-mermaid-chart-plugin
