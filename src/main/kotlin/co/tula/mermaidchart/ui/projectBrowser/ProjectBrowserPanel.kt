@@ -1,16 +1,22 @@
 package co.tula.mermaidchart.ui.projectBrowser
 
-import co.tula.mermaidchart.OAuthManager
+import co.tula.mermaidchart.settings.MermaidSettingsConfigurable
 import co.tula.mermaidchart.utils.CommentUtils
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiManager
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.treeStructure.Tree
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -22,21 +28,24 @@ class ProjectBrowserPanel(
 ) : SimpleToolWindowPanel(true) {
     init {
 
-        val label = JBLabel("Authorize")
+        val toolbar = buildToolbar()
         val browser = Tree(buildTree())
 
         val clickListener = DocumentClickListener(browser, ::onChartClick)
 
         browser.addMouseListener(clickListener)
-        label.addMouseListener(object: MouseAdapter() {
-            override fun mouseClicked(e: MouseEvent?) {
-                super.mouseClicked(e)
-                OAuthManager().initAuthFlow()
-            }
-        })
 
-        setToolbar(label)
+        setToolbar(toolbar)
         setContent(browser)
+    }
+
+    private fun buildToolbar(): ActionToolbarImpl {
+        val actions = object : ActionGroup() {
+            override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+                return arrayOf(SettingsAction(project))
+            }
+        }
+        return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true)
     }
 
     private fun buildTree(): TreeNode {
@@ -99,5 +108,19 @@ class ProjectBrowserPanel(
                 onClick(node.documentId)
             }
         }
+    }
+}
+
+private class SettingsAction(private val project: Project) : AnAction() {
+    init {
+        templatePresentation.apply {
+            icon = AllIcons.General.GearPlain
+            text = "Settings"
+            isEnabled = true
+        }
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, MermaidSettingsConfigurable::class.java)
     }
 }
