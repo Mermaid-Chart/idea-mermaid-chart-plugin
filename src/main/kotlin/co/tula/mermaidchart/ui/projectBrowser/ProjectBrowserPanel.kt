@@ -29,7 +29,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreeNode
-
+// [MermaidChart: 5089868e-68e3-45cf-982a-21129803cb19]
 class ProjectBrowserPanel(
     private val project: Project
 ) : SimpleToolWindowPanel(true) {
