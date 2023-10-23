@@ -29,5 +29,8 @@
         <codeInsight.codeVisionProviderFactory implementation="co.tula.mermaidchart.ui.editorHighlight.MermaidCodeVisionProviderFactory"/>
         <annotator language="" implementationClass="co.tula.mermaidchart.ui.editorHighlight.MermaidCommentAnnotator" order="last"/>
 
+        <applicationConfigurable parentId="tools" instance="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
+                                 id="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
+                                 displayName="MermaidCharts"/>
     </extensions>
 </idea-plugin>
