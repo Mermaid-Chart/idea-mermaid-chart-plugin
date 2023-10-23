@@ -8,3 +8,8 @@ suspend fun <T> Project.withApi(fn: suspend (MermaidApi) -> T): T {
     val gitRepository = MermaidApi(MermaidSettings.baseUrl, MermaidSettings.token)
     return fn(gitRepository)
 }
+
+fun <T> Project.withApiSync(fn: (MermaidApi) -> T): T {
+    val gitRepository = MermaidApi(MermaidSettings.baseUrl, MermaidSettings.token)
+    return fn(gitRepository)
+}

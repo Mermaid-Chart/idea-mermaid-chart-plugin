@@ -16,6 +16,9 @@ class MermaidApi(
     private val baseUrl: String,
     private val token: String
 ) {
+    fun editUrl(documentId: String): String {
+        return "$baseUrl/app/diagrams/${documentId}?ref=idea"
+    }
 
     suspend fun me(): User {
         return "$baseUrl/rest-api/users/me".httpGet()

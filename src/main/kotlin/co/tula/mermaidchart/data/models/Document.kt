@@ -1,11 +1,13 @@
 package co.tula.mermaidchart.data.models
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Document(
-    val id: String,
-    val title: String,
-    val major: Int,
-    val minor: Int
+    @SerialName("id") val id: String,
+    @SerialName("title") val title: String,
+    @SerialName("major") val major: Int,
+    @SerialName("minor") val minor: Int,
+    @SerialName("documentID") val documentId: String
 )

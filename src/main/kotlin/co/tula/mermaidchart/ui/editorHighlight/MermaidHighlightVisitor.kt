@@ -1,6 +1,6 @@
 package co.tula.mermaidchart.ui.editorHighlight
 
-import co.tula.mermaidchart.utils.mermaidLinkRange
+import co.tula.mermaidchart.utils.mermaidLinks
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -15,10 +15,10 @@ import javax.swing.Icon
 // [MermaidChart: d04fc9a8-213c-4b9f-ac80-bd950faf3767]
 class MermaidCommentAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-        val linkRanges = element.mermaidLinkRange()
+        val links = element.mermaidLinks()
 
-        linkRanges.forEach { linkRange ->
-            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(linkRange)
+        links.forEach { link ->
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION).range(link.range)
                 .enforcedTextAttributes(
                     TextAttributes(
                         null, Color(255, 71, 123, 77),
@@ -27,7 +27,7 @@ class MermaidCommentAnnotator : Annotator {
                         Font.PLAIN
                     )
                 )
-                .gutterIconRenderer(SideIconGutterRenderer(linkRange.startOffset)).create()
+                .gutterIconRenderer(SideIconGutterRenderer(link.range.startOffset)).create()
         }
     }
 }

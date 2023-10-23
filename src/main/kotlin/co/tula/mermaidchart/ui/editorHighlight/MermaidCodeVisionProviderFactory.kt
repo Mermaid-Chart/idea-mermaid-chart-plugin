@@ -2,23 +2,29 @@
 
 package co.tula.mermaidchart.ui.editorHighlight
 
-import co.tula.mermaidchart.utils.mermaidLinkRange
+import co.tula.mermaidchart.utils.extensions.withApiSync
+import co.tula.mermaidchart.utils.mermaidLinks
 import com.intellij.codeInsight.codeVision.*
+import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
-import com.intellij.codeInsight.hints.InlayHintsUtils
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.SyntaxTraverser
+import java.awt.event.MouseEvent
 
 class MermaidCodeVisionProviderFactory : CodeVisionProviderFactory {
     override fun createProviders(project: Project): Sequence<CodeVisionProvider<*>> {
-        return sequenceOf(MermaidActionCodeVisionViewProvider(), MermaidActionCodeVisionEditProvider())
+        return sequenceOf(MermaidActionCodeVisionViewProvider(project), MermaidActionCodeVisionEditProvider(project))
     }
 }
 
-class MermaidActionCodeVisionViewProvider : CodeVisionProvider<Unit> {
+class MermaidActionCodeVisionViewProvider(
+    private val project: Project
+) : CodeVisionProvider<Unit> {
     override val defaultAnchor: CodeVisionAnchorKind
         get() = CodeVisionAnchorKind.Top
     override val id: String
@@ -41,11 +47,13 @@ class MermaidActionCodeVisionViewProvider : CodeVisionProvider<Unit> {
 
             val traverser = SyntaxTraverser.psiTraverser(file)
             for (element in traverser.preOrderDfsTraversal()) {
-                val linkRanges = element.mermaidLinkRange()
+                val links = element.mermaidLinks()
 
-                val viewEntry = makeEntry("View Diagram", id)
-                linkRanges.forEach { linkRange ->
-                    lenses.add(linkRange to viewEntry)
+                val viewEntry = makeEntry("View Diagram", id) { _, _ ->
+                    println("Hi there")
+                }
+                links.forEach { link ->
+                    lenses.add(link.range to viewEntry)
                 }
             }
             return@runReadAction CodeVisionState.Ready(lenses)
@@ -53,7 +61,9 @@ class MermaidActionCodeVisionViewProvider : CodeVisionProvider<Unit> {
     }
 }
 
-class MermaidActionCodeVisionEditProvider : CodeVisionProvider<Unit> {
+class MermaidActionCodeVisionEditProvider(
+    private val project: Project
+) : CodeVisionProvider<Unit> {
     override val defaultAnchor: CodeVisionAnchorKind
         get() = CodeVisionAnchorKind.Top
     override val id: String
@@ -76,11 +86,16 @@ class MermaidActionCodeVisionEditProvider : CodeVisionProvider<Unit> {
 
             val traverser = SyntaxTraverser.psiTraverser(file)
             for (element in traverser.preOrderDfsTraversal()) {
-                val linkRanges = element.mermaidLinkRange()
+                val links = element.mermaidLinks()
 
-                val editEntry = makeEntry("Edit Diagram", id)
-                linkRanges.forEach { linkRange ->
-                    lenses.add(linkRange to editEntry)
+
+                links.forEach { link ->
+                    val editEntry = makeEntry("Edit Diagram", id) { e, editor ->
+                        project.withApiSync {
+                            BrowserUtil.open(it.editUrl(link.documentId))
+                        }
+                    }
+                    lenses.add(link.range to editEntry)
                 }
             }
             return@runReadAction CodeVisionState.Ready(lenses)
@@ -88,14 +103,10 @@ class MermaidActionCodeVisionEditProvider : CodeVisionProvider<Unit> {
     }
 }
 
-private fun makeEntry(name: String, id: String): TextCodeVisionEntry = TextCodeVisionEntry(
-    name, id, null, name, name, emptyList()
+private fun makeEntry(
+    name: String,
+    id: String,
+    onClick: (ev: MouseEvent?, editor: Editor) -> Unit
+): TextCodeVisionEntry = ClickableTextCodeVisionEntry(
+    name, id, onClick, null, name, name, emptyList()
 ).apply { showInMorePopup = false }
-
-private fun PsiComment.safeRange(editorLength: Int): TextRange {
-    val textRange = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(this)
-    val adjustedRange = TextRange(
-        Integer.min(textRange.startOffset, editorLength), Integer.min(textRange.endOffset, editorLength)
-    )
-    return adjustedRange
-}
