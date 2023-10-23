@@ -1,0 +1,12 @@
+[versions]
+ktorVersion = "2.3.3"
+
+[libraries]
+ktor-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorVersion" }
+ktor-client-java = { module = "io.ktor:ktor-client-java", version.ref = "ktorVersion" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktorVersion" }
+
+[bundles]
+ktor = ["ktor-core", "ktor-client-java", "ktor-client-logging"]
+
+

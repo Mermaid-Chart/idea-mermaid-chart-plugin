@@ -8,11 +8,11 @@ import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiElement
-import icons.Icons
+import co.tula.mermaidchart.ui.Icons
 import java.awt.Color
 import java.awt.Font
 import javax.swing.Icon
-
+// [MermaidChart: d04fc9a8-213c-4b9f-ac80-bd950faf3767]
 class MermaidCommentAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val linkRanges = element.mermaidLinkRange()

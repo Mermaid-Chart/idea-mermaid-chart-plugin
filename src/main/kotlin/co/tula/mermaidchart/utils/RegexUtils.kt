@@ -1,6 +1,5 @@
 package co.tula.mermaidchart.utils
 
-import ai.grazie.utils.findAllMatches
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
@@ -10,9 +9,9 @@ private val mermaidLinkRegex =
 fun PsiElement.mermaidLinkRange(): List<TextRange> {
     if (this != this.node) return emptyList() //Prevent following PSI elements, that captures comment, to be considered as comment
 
-    val matches = mermaidLinkRegex.findAllMatches(this.text)
+    val matches = mermaidLinkRegex.findAll(this.text)
 
-    return matches.map { match ->
-        TextRange(this.textOffset + match.range.first, this.textOffset + match.range.last + 1)
-    }
+    return matches
+        .toList()
+        .map { match -> TextRange(this.textOffset + match.range.first, this.textOffset + match.range.last + 1) }
 }

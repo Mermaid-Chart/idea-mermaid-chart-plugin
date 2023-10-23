@@ -1,7 +1,9 @@
 package co.tula.mermaidchart.ui.projectBrowser
 
+import co.tula.mermaidchart.data.models.Document
 import co.tula.mermaidchart.settings.MermaidSettingsConfigurable
 import co.tula.mermaidchart.utils.CommentUtils
+import co.tula.mermaidchart.utils.extensions.withApi
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -18,18 +20,25 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiManager
 import com.intellij.ui.treeStructure.Tree
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeModel
 import javax.swing.tree.TreeNode
 
 class ProjectBrowserPanel(
     private val project: Project
 ) : SimpleToolWindowPanel(true) {
-    init {
+    private val scope = CoroutineScope(Dispatchers.Default)
 
+    init {
         val toolbar = buildToolbar()
-        val browser = Tree(buildTree())
+        toolbar.targetComponent = this
+        val browser = Tree(buildLoadingTree())
 
         val clickListener = DocumentClickListener(browser, ::onChartClick)
 
@@ -37,6 +46,14 @@ class ProjectBrowserPanel(
 
         setToolbar(toolbar)
         setContent(browser)
+
+        scope.launch {
+            project.withApi { api ->
+                val projects = api.projects()
+                    .map { it to api.documents(it.id) }
+                browser.model = buildTree(projects)
+            }
+        }
     }
 
     private fun buildToolbar(): ActionToolbarImpl {
@@ -48,13 +65,27 @@ class ProjectBrowserPanel(
         return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true)
     }
 
-    private fun buildTree(): TreeNode {
-        val projects = DefaultMutableTreeNode("Projects")
-        val mockedProject = DefaultMutableTreeNode("Mocked Project")
-        val mockedDocument = DocumentTreeNode("Mocked Doc", "5089868e-68e3-45cf-982a-21129803cb19")
+    private fun buildTree(data: List<Pair<co.tula.mermaidchart.data.models.Project, List<Document>>>): TreeModel {
+        val rootNode = DefaultMutableTreeNode("Projects")
 
-        mockedProject.add(mockedDocument)
-        projects.add(mockedProject)
+        data
+            .map { (project, documents) ->
+                val node = DefaultMutableTreeNode(project.title)
+                documents
+                    .map { DocumentTreeNode(it.title, it.id) }
+                    .forEach { node.add(it) }
+                node
+            }
+            .forEach { rootNode.add(it) }
+
+        return DefaultTreeModel(rootNode)
+    }
+
+    private fun buildLoadingTree(): TreeNode {
+        val projects = DefaultMutableTreeNode("Projects")
+        val loadingNode = DefaultMutableTreeNode("Loading")
+
+        projects.add(loadingNode)
 
         return projects
     }
@@ -111,14 +142,8 @@ class ProjectBrowserPanel(
     }
 }
 
-private class SettingsAction(private val project: Project) : AnAction() {
-    init {
-        templatePresentation.apply {
-            icon = AllIcons.General.GearPlain
-            text = "Settings"
-            isEnabled = true
-        }
-    }
+private class SettingsAction(private val project: Project) :
+    AnAction("Settings", null, AllIcons.General.GearPlain) {
 
     override fun actionPerformed(e: AnActionEvent) {
         ShowSettingsUtil.getInstance().showSettingsDialog(project, MermaidSettingsConfigurable::class.java)

@@ -1,10 +1,8 @@
-package icons
+package co.tula.mermaidchart.ui
 
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.IconLoader.getIcon
 
-class Icons {
-    companion object {
-        val Mermaid = IconLoader.getIcon("/icons/mermaid-icon.svg", Icons::class.java)
-    }
+object Icons {
+    @JvmField
+    val Mermaid = IconLoader.getIcon("/icons/mermaid-icon.svg", this.javaClass)
 }
