@@ -4,12 +4,20 @@ package co.tula.mermaidchart.ui.editorHighlight
 
 import co.tula.mermaidchart.data.DiagramFormat
 import co.tula.mermaidchart.services.DiagramDownloader
-import co.tula.mermaidchart.utils.extensions.withApiSync
+import co.tula.mermaidchart.utils.Left
+import co.tula.mermaidchart.utils.MermaidLink
+import co.tula.mermaidchart.utils.Right
+import co.tula.mermaidchart.utils.extensions.withApi
 import co.tula.mermaidchart.utils.mermaidLinks
 import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.codeInsight.hint.HintManager
 import com.intellij.ide.BrowserUtil
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
@@ -59,32 +67,44 @@ class MermaidActionCodeVisionViewProvider(
             val traverser = SyntaxTraverser.psiTraverser(file)
             for (element in traverser.preOrderDfsTraversal()) {
                 val links = element.mermaidLinks()
+
                 links.forEach { link ->
-                    val viewEntry = makeEntry("View Diagram", id) { _, _ ->
-                        scope.launch {
-                            val file = try {
-                                DiagramDownloader(project, link.documentId, DiagramFormat.PNG)
-                            } catch (e: Exception) {
-                                //TODO: Show error
-                                null
-                            }
-
-                            val virtualFile = file?.let { LocalFileSystem.getInstance().findFileByIoFile(it) }
-                            if(virtualFile == null){
-                                //TODO: Show error
-                                return@launch
-                            }
-
-                            runInEdt {
-                                FileEditorManager.getInstance(project).openFile(virtualFile)
-                            }
-                        }
-                    }
+                    val viewEntry = buildEntryForLink(link, editor)
 
                     lenses.add(link.range to viewEntry)
                 }
             }
             return@runReadAction CodeVisionState.Ready(lenses)
+        }
+    }
+
+    private fun buildEntryForLink(link: MermaidLink, editor: Editor): TextCodeVisionEntry {
+        fun showError(msg: String) {
+            runInEdt {
+                NotificationGroupManager.getInstance()
+                    .getNotificationGroup("MermaidCharts")
+                    .createNotification("Mermaid Charts", msg, NotificationType.ERROR)
+                    .notify(editor.project)
+            }
+        }
+        return makeEntry("View Diagram", id) { _, _ ->
+            scope.launch {
+                when (val diagram = DiagramDownloader(project, link.documentId, DiagramFormat.PNG)) {
+                    is Left -> showError("Can't download file")
+
+                    is Right -> {
+                        val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(diagram.v)
+                        if (virtualFile == null) {
+                            showError("Can't find downloaded file")
+                            return@launch
+                        }
+
+                        runInEdt {
+                            FileEditorManager.getInstance(project).openFile(virtualFile)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -119,7 +139,7 @@ class MermaidActionCodeVisionEditProvider(
 
                 links.forEach { link ->
                     val editEntry = makeEntry("Edit Diagram", id) { e, editor ->
-                        project.withApiSync {
+                        project.withApi {
                             BrowserUtil.open(it.editUrl(link.documentId))
                         }
                     }

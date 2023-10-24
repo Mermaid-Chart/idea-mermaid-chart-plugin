@@ -32,5 +32,9 @@
         <applicationConfigurable parentId="tools" instance="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
                                  id="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
                                  displayName="MermaidCharts"/>
+
+        <notificationGroup id="MermaidCharts"
+                           displayType="BALLOON"/>
+
     </extensions>
 </idea-plugin>
