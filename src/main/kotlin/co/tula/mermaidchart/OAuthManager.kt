@@ -30,6 +30,7 @@ import java.util.*
     for state and code_challenge we have to make pair of uuid, one is state (key) to code_challenge,
        we have to store this pair for auth process
  */
+// Unused due to requirements changes, but might be useful in future
 class OAuthManager {
     private val pendingStates = mutableMapOf<UUID, UUID>()
 

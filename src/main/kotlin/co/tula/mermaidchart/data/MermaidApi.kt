@@ -2,8 +2,14 @@ package co.tula.mermaidchart.data
 
 import co.tula.mermaidchart.data.models.Document
 import co.tula.mermaidchart.data.models.Project
+import co.tula.mermaidchart.data.models.ProjectWithDocuments
 import co.tula.mermaidchart.data.models.User
+import co.tula.mermaidchart.utils.EitherE
+import co.tula.mermaidchart.utils.Left
+import co.tula.mermaidchart.utils.Right
+import co.tula.mermaidchart.utils.bind
 import com.fasterxml.jackson.annotation.JsonValue
+import com.intellij.util.io.HttpRequests.HttpStatusException
 import io.ktor.client.*
 import io.ktor.client.engine.java.*
 import io.ktor.client.request.*
@@ -39,19 +45,36 @@ class MermaidApi(
         return "$baseUrl/app/diagrams/${documentId}?ref=idea"
     }
 
-    suspend fun me(): Result<User> = wrapResult {
+    suspend fun me(): EitherE<User> = wrapResult {
         "$baseUrl/rest-api/users/me".httpGet()
     }
 
-    suspend fun projects(): Result<List<Project>> = wrapResult {
+    suspend fun projectsWithDocuments(): EitherE<List<ProjectWithDocuments>> {
+        val projects = projects()
+        if (projects is Left) return Left(projects.v)
+
+        val documents = (projects as Right).v
+            .map {
+                val docs = documents(it.id)
+                if (docs is Left) return Left(docs.v)
+                (docs as Right).v
+            }
+
+        return projects.v
+            .zip(documents)
+            .map { ProjectWithDocuments(it.first, it.second) }
+            .let { Right(it) }
+    }
+
+    suspend fun projects(): EitherE<List<Project>> = wrapResult {
         "$baseUrl/rest-api/projects".httpGet()
     }
 
-    suspend fun documents(projectId: String): Result<List<Document>> = wrapResult {
+    suspend fun documents(projectId: String): EitherE<List<Document>> = wrapResult {
         "$baseUrl/rest-api/projects/$projectId/documents".httpGet()
     }
 
-    suspend fun document(documentId: String): Result<Document> = wrapResult {
+    suspend fun document(documentId: String): EitherE<Document> = wrapResult {
         "$baseUrl/rest-api/documents/$documentId".httpGet()
     }
 
@@ -67,6 +90,9 @@ class MermaidApi(
             }
         }
         val httpResponse = ktorClient.request(request)
+        if(!httpResponse.status.isSuccess()){
+            throw HttpStatusException("Wrong response code", httpResponse.status.value, request.url.buildString())
+        }
         return httpResponse.bodyAsText()
     }
 
@@ -79,11 +105,11 @@ class MermaidApi(
         }
     }
 
-    private suspend fun <T> wrapResult(fn: suspend () -> T): Result<T> {
+    private suspend fun <T> wrapResult(fn: suspend () -> T): EitherE<T> {
         return try {
-            Result.success(fn())
+            Right(fn())
         } catch (e: Exception) {
-            Result.failure(e)
+            Left(e)
         }
     }
 

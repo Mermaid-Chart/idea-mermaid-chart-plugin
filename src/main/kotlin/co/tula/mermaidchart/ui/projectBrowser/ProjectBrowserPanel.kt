@@ -1,16 +1,24 @@
 package co.tula.mermaidchart.ui.projectBrowser
 
-import co.tula.mermaidchart.data.models.Document
+import co.tula.mermaidchart.data.models.ProjectWithDocuments
 import co.tula.mermaidchart.settings.MermaidSettingsConfigurable
 import co.tula.mermaidchart.utils.CommentUtils
+import co.tula.mermaidchart.utils.Left
+import co.tula.mermaidchart.utils.Right
+import co.tula.mermaidchart.utils.extensions.isUnauthorized
 import co.tula.mermaidchart.utils.extensions.withApi
 import com.intellij.icons.AllIcons
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.editor.HighlighterColors
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -19,9 +27,13 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiManager
+import com.intellij.ui.LoadingNode
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -29,33 +41,33 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
 
-// [MermaidChart: 5089868e-68e3-45cf-982a-21129803cb19]
 class ProjectBrowserPanel(
     private val project: Project
 ) : SimpleToolWindowPanel(true) {
     private val scope = CoroutineScope(Dispatchers.Default)
+    private var browser: Tree? = null
+    private var refreshJob: Job? = null
 
     init {
         val toolbar = buildToolbar()
         toolbar.targetComponent = this
         val browser = Tree(buildLoadingTree())
 
-        val clickListener = DocumentClickListener(browser, ::onChartClick)
+        this.browser = browser
+
+        val clickListener = TreeClickListener(
+            browser,
+            ::onChartClick,
+            onRefreshClick = ::refresh,
+            onSettingClick = { openSettings(project) }
+        )
 
         browser.addMouseListener(clickListener)
 
         setToolbar(toolbar)
         setContent(browser)
 
-        scope.launch {
-            project.withApi { api ->
-                val projects = api.projects()
-                    .getOrNull()
-                    ?.map { it to api.documents(it.id).getOrThrow() }
-                //TODO: Handle errors
-                browser.model = projects?.let { buildTree(it) } ?: buildLoadingTree()
-            }
-        }
+        refresh()
     }
 
     private fun buildToolbar(): ActionToolbarImpl {
@@ -67,8 +79,10 @@ class ProjectBrowserPanel(
         return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true)
     }
 
-    private fun buildTree(data: List<Pair<co.tula.mermaidchart.data.models.Project, List<Document>>>): TreeModel {
-        val rootNode = DefaultMutableTreeNode("Projects")
+    private fun rootNode(): DefaultMutableTreeNode = DefaultMutableTreeNode("Projects")
+
+    private fun buildTree(data: List<ProjectWithDocuments>): TreeModel {
+        val rootNode = rootNode()
 
         data
             .map { (project, documents) ->
@@ -84,12 +98,34 @@ class ProjectBrowserPanel(
     }
 
     private fun buildLoadingTree(): TreeModel {
-        val projects = DefaultMutableTreeNode("Projects")
-        val loadingNode = DefaultMutableTreeNode("Loading")
+        val projects = rootNode()
+        val loadingNode = LoadingNode("Loading")
 
         projects.add(loadingNode)
 
         return DefaultTreeModel(projects)
+    }
+
+    private fun buildFailedTree(exception: Exception): TreeModel {
+        val projects = rootNode()
+        val errorNode = NetworkErrorTreeNode(project, exception)
+
+        projects.add(errorNode)
+
+        return DefaultTreeModel(projects)
+    }
+
+    private fun refresh() {
+        browser?.model = buildLoadingTree()
+        refreshJob?.cancel()
+        refreshJob = scope.launch {
+            project.withApi { api ->
+                when (val projects = api.projectsWithDocuments()) {
+                    is Left -> browser?.model = buildFailedTree(projects.v)
+                    is Right -> browser?.model = buildTree(projects.v)
+                }
+            }
+        }
     }
 
     private fun onChartClick(chartId: String) {
@@ -129,16 +165,65 @@ class ProjectBrowserPanel(
         val documentId: String
     ) : DefaultMutableTreeNode(name)
 
-    private class DocumentClickListener(
+    private class NetworkErrorTreeNode(
+        private val project: Project,
+        val exception: Exception
+    ) : DefaultMutableTreeNode() {
+        override fun getUserObject(): Any {
+            return object : PresentableNodeDescriptor<NetworkErrorTreeNode>(project, null) {
+                init {
+                    val defaultTextColor = EditorColorsManager.getInstance()
+                        .schemeForCurrentUITheme
+                        .getAttributes(HighlighterColors.TEXT)
+                    val linkTextColor = EditorColorsManager.getInstance()
+                        .schemeForCurrentUITheme
+                        .getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
+
+
+                    val (description, link) = if (exception is HttpRequests.HttpStatusException && exception.isUnauthorized) {
+                        "Failed: Unauthorized. " to "Open Settings"
+                    } else {
+                        "Failed. " to "Click to Refresh"
+                    }
+                    presentation.addText(
+                        ColoredFragment(
+                            description,
+                            SimpleTextAttributes.fromTextAttributes(defaultTextColor)
+                        )
+                    )
+                    presentation.addText(
+                        ColoredFragment(
+                            link,
+                            SimpleTextAttributes.fromTextAttributes(linkTextColor)
+                        )
+                    )
+                }
+
+                override fun update(presentation: PresentationData) {}
+                override fun getElement(): NetworkErrorTreeNode = this@NetworkErrorTreeNode
+
+            }
+        }
+    }
+
+    private class TreeClickListener(
         private val rootTree: Tree,
-        private val onClick: (documentId: String) -> Unit
+        private val onDocumentClick: (documentId: String) -> Unit,
+        private val onRefreshClick: () -> Unit,
+        private val onSettingClick: () -> Unit,
     ) : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent?) {
             super.mouseClicked(e)
 
             val node = rootTree.lastSelectedPathComponent
             if (node is DocumentTreeNode) {
-                onClick(node.documentId)
+                onDocumentClick(node.documentId)
+            } else if (node is NetworkErrorTreeNode) {
+                if (node.exception is HttpRequests.HttpStatusException && node.exception.isUnauthorized) {
+                    onSettingClick()
+                } else {
+                    onRefreshClick()
+                }
             }
         }
     }
@@ -148,6 +233,10 @@ private class SettingsAction(private val project: Project) :
     AnAction("Settings", null, AllIcons.General.GearPlain) {
 
     override fun actionPerformed(e: AnActionEvent) {
-        ShowSettingsUtil.getInstance().showSettingsDialog(project, MermaidSettingsConfigurable::class.java)
+        openSettings(project)
     }
+}
+
+private fun openSettings(project: Project) {
+    ShowSettingsUtil.getInstance().showSettingsDialog(project, MermaidSettingsConfigurable::class.java)
 }

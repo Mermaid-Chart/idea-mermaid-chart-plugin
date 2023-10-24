@@ -4,6 +4,7 @@ import co.tula.mermaidchart.data.DiagramFormat
 import co.tula.mermaidchart.data.DiagramTheme
 import co.tula.mermaidchart.settings.MermaidSettings
 import co.tula.mermaidchart.utils.extensions.withApi
+import co.tula.mermaidchart.utils.rightOrThrow
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -43,7 +44,7 @@ object DiagramDownloader {
         }
 
         val (document, uri) = project.withApi {
-            val document = it.document(diagramId).getOrThrow()
+            val document = it.document(diagramId).rightOrThrow()
             document to it.viewUrl(document, theme, format)
         }
 
