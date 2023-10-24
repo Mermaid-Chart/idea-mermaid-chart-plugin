@@ -28,7 +28,7 @@ import java.awt.event.MouseEvent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
-import javax.swing.tree.TreeNode
+
 // [MermaidChart: 5089868e-68e3-45cf-982a-21129803cb19]
 class ProjectBrowserPanel(
     private val project: Project
@@ -50,8 +50,10 @@ class ProjectBrowserPanel(
         scope.launch {
             project.withApi { api ->
                 val projects = api.projects()
-                    .map { it to api.documents(it.id) }
-                browser.model = buildTree(projects)
+                    .getOrNull()
+                    ?.map { it to api.documents(it.id).getOrThrow() }
+                //TODO: Handle errors
+                browser.model = projects?.let { buildTree(it) } ?: buildLoadingTree()
             }
         }
     }
@@ -81,13 +83,13 @@ class ProjectBrowserPanel(
         return DefaultTreeModel(rootNode)
     }
 
-    private fun buildLoadingTree(): TreeNode {
+    private fun buildLoadingTree(): TreeModel {
         val projects = DefaultMutableTreeNode("Projects")
         val loadingNode = DefaultMutableTreeNode("Loading")
 
         projects.add(loadingNode)
 
-        return projects
+        return DefaultTreeModel(projects)
     }
 
     private fun onChartClick(chartId: String) {

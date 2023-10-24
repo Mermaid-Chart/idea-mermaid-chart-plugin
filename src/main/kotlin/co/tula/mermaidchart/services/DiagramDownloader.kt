@@ -1,7 +1,13 @@
 package co.tula.mermaidchart.services
 
+import co.tula.mermaidchart.data.DiagramFormat
+import co.tula.mermaidchart.data.DiagramTheme
 import co.tula.mermaidchart.settings.MermaidSettings
+import co.tula.mermaidchart.utils.extensions.withApi
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -17,6 +23,7 @@ import io.ktor.utils.io.copyTo
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.FileOutputStream
@@ -27,17 +34,31 @@ import kotlin.coroutines.resumeWithException
 
 object DiagramDownloader {
     private val client = HttpClient(Java)
-    private val logger = logger<DiagramDownloader>()
-    suspend operator fun invoke(project: Project, uri: String): File {
-        val tempFile = FileUtilRt.createTempFile("diagram_", ".png")
-        val scope = CoroutineScope(coroutineContext)
+    private val tempDir = File(FileUtilRt.getTempDirectory())
+
+    suspend operator fun invoke(project: Project, diagramId: String, format: DiagramFormat): File {
+        val theme = when(EditorColorsManager.getInstance().isDarkEditor){
+            true -> DiagramTheme.Dark
+            else -> DiagramTheme.Light
+        }
+
+        val (document, uri) = project.withApi {
+            val document = it.document(diagramId).getOrThrow()
+            document to it.viewUrl(document, theme, format)
+        }
+
+        val tempFile =  File(tempDir, "MermaidChart_${diagramId}_v${document.major}_${document.minor}.${format.format}")
+
+        if(tempFile.exists()){
+            return tempFile
+        }
 
         return suspendCancellableCoroutine { cont ->
+
             val task = object : Task.Backgroundable(project, "Diagram Downloading") {
                 override fun run(indicator: ProgressIndicator) {
-                    logger.debug("Task launched")
                     indicator.isIndeterminate = true
-                    scope.launch {
+                    runBlocking {
                         client
                             .prepareGet(url = Url(uri)) {
                                 header("Authorization", "Bearer ${MermaidSettings.token}")
@@ -46,13 +67,10 @@ object DiagramDownloader {
                                 val fos = FileOutputStream(tempFile)
                                 try {
                                     it.bodyAsChannel().copyTo(fos)
-                                    logger.debug("Copied")
                                     cont.resume(tempFile)
                                 } catch (e: Exception){
-                                    logger.debug("Failed")
                                     cont.resumeWithException(e)
                                 } finally {
-                                    logger.debug("FOS Closed")
                                     fos.close()
                                 }
                             }

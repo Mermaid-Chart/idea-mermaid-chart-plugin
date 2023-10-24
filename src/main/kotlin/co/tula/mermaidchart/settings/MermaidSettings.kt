@@ -22,6 +22,10 @@ object MermaidSettings {
 
 
     var baseUrl: String
-        get() = props.getValue(KEY_BASE_URL, BASE_URL_DEFAULT).takeIf { it.isNotEmpty() } ?: BASE_URL_DEFAULT
-        set(value) = props.setValue(KEY_BASE_URL, value.replaceFirst("/*$", ""))
+        get() = cleanupUrl(props.getValue(KEY_BASE_URL, BASE_URL_DEFAULT))
+            .takeIf { it.isNotEmpty() }
+            ?: BASE_URL_DEFAULT
+        set(value) = props.setValue(KEY_BASE_URL, cleanupUrl(value))
+
+    private fun cleanupUrl(url: String): String = url.replaceFirst(Regex("/*$"), "")
 }
