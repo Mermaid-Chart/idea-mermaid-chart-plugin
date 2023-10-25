@@ -96,7 +96,7 @@ class ProjectBrowserPanel(
             .map { (project, documents) ->
                 val node = DefaultMutableTreeNode(project.title)
                 documents
-                    .map { DocumentTreeNode(it.title, it.documentId) }
+                    .map { DocumentTreeNode(it.title ?: "Untitled Diagram", it.documentId) }
                     .forEach { node.add(it) }
                 node
             }
