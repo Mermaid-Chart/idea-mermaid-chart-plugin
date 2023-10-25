@@ -5,11 +5,12 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.util.messages.Topic
 
 object MermaidSettings {
     private const val KEY_TOKEN = "co.tula.mermaidchart.settings.token"
     private const val KEY_BASE_URL = "co.tula.mermaidchart.settings.baseUrl"
-    private const val BASE_URL_DEFAULT = "https://www.mermaidchart.com"
+    const val BASE_URL_DEFAULT = "https://www.mermaidchart.com"
 
     private val props = PropertiesComponent.getInstance()
 
@@ -28,4 +29,12 @@ object MermaidSettings {
         set(value) = props.setValue(KEY_BASE_URL, cleanupUrl(value))
 
     private fun cleanupUrl(url: String): String = url.replaceFirst(Regex("/*$"), "")
+}
+
+fun interface MermaidSettingsListener {
+    fun onSettingsChange()
+}
+
+object MermaidSettingsTopic {
+    val TOPIC = Topic(MermaidSettingsListener::class.java)
 }

@@ -2,6 +2,8 @@ package co.tula.mermaidchart.ui.projectBrowser
 
 import co.tula.mermaidchart.data.models.ProjectWithDocuments
 import co.tula.mermaidchart.settings.MermaidSettingsConfigurable
+import co.tula.mermaidchart.settings.MermaidSettingsListener
+import co.tula.mermaidchart.settings.MermaidSettingsTopic
 import co.tula.mermaidchart.utils.CommentUtils
 import co.tula.mermaidchart.utils.Left
 import co.tula.mermaidchart.utils.Right
@@ -15,6 +17,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColors
@@ -49,8 +52,6 @@ class ProjectBrowserPanel(
     private var refreshJob: Job? = null
 
     init {
-        val toolbar = buildToolbar()
-        toolbar.targetComponent = this
         val browser = Tree(buildLoadingTree())
 
         this.browser = browser
@@ -64,8 +65,13 @@ class ProjectBrowserPanel(
 
         browser.addMouseListener(clickListener)
 
-        setToolbar(toolbar)
+        setToolbar(buildToolbar())
         setContent(browser)
+
+        ApplicationManager.getApplication()
+            .messageBus
+            .connect()
+            .subscribe(MermaidSettingsTopic.TOPIC, MermaidSettingsListener { refresh() })
 
         refresh()
     }
@@ -76,7 +82,9 @@ class ProjectBrowserPanel(
                 return arrayOf(SettingsAction(project))
             }
         }
-        return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true)
+        return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true).apply {
+            targetComponent = this
+        }
     }
 
     private fun rootNode(): DefaultMutableTreeNode = DefaultMutableTreeNode("Projects")

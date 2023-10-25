@@ -1,5 +1,7 @@
 package co.tula.mermaidchart.settings
 
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
@@ -35,6 +37,7 @@ class MermaidSettingsConfigurable : Configurable {
             MermaidSettings.token = it.getToken()
             MermaidSettings.baseUrl = it.getBaseUrl()
         }
+        ApplicationManager.getApplication().messageBus.syncPublisher(MermaidSettingsTopic.TOPIC).onSettingsChange()
     }
 
     override fun reset() {
