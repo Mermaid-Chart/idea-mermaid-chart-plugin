@@ -16,15 +16,7 @@ data class MermaidLink(
 )
 
 private fun PsiElement.shouldSkipPSIElement(): Boolean {
-    if (this.language == Language.findLanguageByID("Markdown")) {
-        return this is PsiFile
-    } else if (this.language == Language.findLanguageByID("textmate")) {
-        return this !is PsiFile
-    }
-
     return this.children.isNotEmpty()
-
-    //return this.node != this //Prevent following PSI elements, that captures comment, to be considered as comment
 }
 
 fun PsiElement.mermaidLinks(): List<MermaidLink> {
