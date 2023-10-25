@@ -11,9 +11,15 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 import com.intellij.psi.util.PsiUtilBase
 
 object CommentUtils {
-    fun getCommentPrefix(file: PsiFile?, editor: Editor): String {
+    fun wrapInComment(file: PsiFile?, editor: Editor, text: String): String {
         val commenter = file?.let { findCommenter(file, editor) }
-        return commenter?.lineCommentPrefix ?: "//"
+        return if (commenter?.lineCommentPrefix != null) {
+            "${commenter.lineCommentPrefix} $text"
+        } else if (commenter?.blockCommentPrefix != null && commenter?.blockCommentSuffix != null) {
+            "${commenter.blockCommentPrefix} $text ${commenter.blockCommentSuffix}"
+        } else {
+            "// $text"
+        }
     }
 
     //Fork of CommentByBlockCommentHandler.java

@@ -27,7 +27,7 @@
         <toolWindow factoryClass="co.tula.mermaidchart.ui.projectBrowser.ProjectWindowFactory" id="MermaidChart" anchor="left" secondary="false" icon="co.tula.mermaidchart.ui.Icons.Mermaid"/>
         
         <codeInsight.codeVisionProviderFactory implementation="co.tula.mermaidchart.ui.editorHighlight.MermaidCodeVisionProviderFactory"/>
-        <annotator language="" implementationClass="co.tula.mermaidchart.ui.editorHighlight.MermaidCommentAnnotator" order="last"/>
+        <annotator language="" implementationClass="co.tula.mermaidchart.ui.editorHighlight.MermaidCommentAnnotator" order="first"/>
 
         <applicationConfigurable parentId="tools" instance="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
                                  id="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"

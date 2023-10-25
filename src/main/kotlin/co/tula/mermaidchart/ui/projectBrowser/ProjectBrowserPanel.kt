@@ -9,6 +9,7 @@ import co.tula.mermaidchart.utils.Left
 import co.tula.mermaidchart.utils.Right
 import co.tula.mermaidchart.utils.extensions.isUnauthorized
 import co.tula.mermaidchart.utils.extensions.withApi
+import co.tula.mermaidchart.utils.notifyError
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
@@ -34,10 +35,7 @@ import com.intellij.ui.LoadingNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.io.HttpRequests
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.tree.DefaultMutableTreeNode
@@ -59,7 +57,7 @@ class ProjectBrowserPanel(
         val clickListener = TreeClickListener(
             browser,
             ::onChartClick,
-            onRefreshClick = ::refresh,
+            onRefreshClick = { refresh(true) },
             onSettingClick = { openSettings(project) }
         )
 
@@ -123,13 +121,19 @@ class ProjectBrowserPanel(
         return DefaultTreeModel(projects)
     }
 
-    private fun refresh() {
+    private fun refresh(afterError: Boolean = false) {
         browser?.model = buildLoadingTree()
         refreshJob?.cancel()
         refreshJob = scope.launch {
+            if(afterError){
+                delay(500)
+            }
             project.withApi { api ->
                 when (val projects = api.projectsWithDocuments()) {
-                    is Left -> browser?.model = buildFailedTree(projects.v)
+                    is Left -> {
+                        project.notifyError(projects.v.localizedMessage, projects.v)
+                        browser?.model = buildFailedTree(projects.v)
+                    }
                     is Right -> browser?.model = buildTree(projects.v)
                 }
             }
@@ -142,7 +146,7 @@ class ProjectBrowserPanel(
 
         val psiFile = PsiManager.getInstance(project).findFile(editor.virtualFile)
 
-        val link = "${CommentUtils.getCommentPrefix(psiFile, editor)} [MermaidChart: $chartId]"
+        val link = CommentUtils.wrapInComment(psiFile, editor, "[MermaidChart: $chartId]")
 
         val document = editor.document
 
