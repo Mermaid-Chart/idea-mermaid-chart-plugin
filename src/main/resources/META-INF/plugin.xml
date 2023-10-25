@@ -36,5 +36,7 @@
         <notificationGroup id="MermaidCharts"
                            displayType="BALLOON"/>
 
+        <config.codeVisionGroupSettingProvider implementation="co.tula.mermaidchart.settings.MermaidCodeVisionSettingsProvider"/>
+
     </extensions>
 </idea-plugin>

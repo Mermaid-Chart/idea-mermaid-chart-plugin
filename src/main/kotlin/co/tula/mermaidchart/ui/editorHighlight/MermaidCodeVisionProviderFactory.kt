@@ -44,6 +44,9 @@ class MermaidActionCodeVisionViewProvider(
     private val project: Project
 ) : CodeVisionProvider<Unit> {
     val scope = CoroutineScope(Dispatchers.Default)
+
+    override val groupId: String
+        get() = "mermaidcharts"
     override val defaultAnchor: CodeVisionAnchorKind
         get() = CodeVisionAnchorKind.Top
     override val id: String
@@ -112,6 +115,8 @@ class MermaidActionCodeVisionViewProvider(
 class MermaidActionCodeVisionEditProvider(
     private val project: Project
 ) : CodeVisionProvider<Unit> {
+    override val groupId: String
+        get() = "mermaidcharts"
     override val defaultAnchor: CodeVisionAnchorKind
         get() = CodeVisionAnchorKind.Top
     override val id: String
@@ -138,7 +143,7 @@ class MermaidActionCodeVisionEditProvider(
 
 
                 links.forEach { link ->
-                    val editEntry = makeEntry("Edit Diagram", id) { e, editor ->
+                    val editEntry = makeEntry("Edit Diagram", id) { _, _ ->
                         project.withApi {
                             BrowserUtil.open(it.editUrl(link.documentId))
                         }
