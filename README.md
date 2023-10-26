@@ -11,3 +11,10 @@ In the explorer view under the MERMAIDCHART section you will find all the diagra
 ## Requirements
 
 The Mermaid Chart extension for IntelliJ IDEA seamlessly integrates with the Mermaid Chart service, requiring an account to use. Choose between the free tier (limited to 5 diagrams) or the pro tier (unlimited diagrams). Collaborate by setting up teams and sharing diagrams within your development organisation. Simplify diagram management and enhance your workflow with Mermaid Chart for IntelliJ IDEA.
+
+## Build Process
+
+1. Import project to IntelliJ IDEA
+2. Run "Execute Gradle Task" (you can find it by pressing Shift+Shift or in Gradle tab to the right of editor)
+3. Run "gradle buildPlugin"
+4. Then the plugin .zip can be found in $PROJECT_FOLDER/build/distribution folder 
