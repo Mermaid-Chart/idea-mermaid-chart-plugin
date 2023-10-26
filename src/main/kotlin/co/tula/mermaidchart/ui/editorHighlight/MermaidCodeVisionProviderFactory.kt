@@ -102,7 +102,7 @@ class MermaidActionCodeVisionViewProvider(
                         }
 
                         runInEdt {
-                            FileEditorManager.getInstance(project).openFile(virtualFile)
+                            FileEditorManager.getInstance(project).openFile(virtualFile, true)
                         }
                     }
                 }

@@ -5,8 +5,8 @@ plugins {
     id("org.jetbrains.intellij") version "1.15.0"
 }
 
-group = "co.tula"
-version = "1.0-SNAPSHOT"
+group = "co.tula.mermaidchart"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -24,10 +24,9 @@ dependencies {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2023.1")
-    type.set("IC") // Target IDE Platform
+    version.set("2022.3")
 
-    plugins.set(listOf(/* Plugin Dependencies */))
+    plugins.set(listOf())
 }
 
 tasks {
@@ -42,7 +41,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("223")
-        untilBuild.set("232.*")
+        untilBuild.set("233")
     }
 
     signPlugin {

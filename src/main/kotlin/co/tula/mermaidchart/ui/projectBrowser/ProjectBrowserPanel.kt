@@ -24,6 +24,7 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -31,6 +32,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.ui.LoadingNode
 import com.intellij.ui.SimpleTextAttributes
@@ -145,7 +147,7 @@ class ProjectBrowserPanel(
         val editor = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.editor
             ?: return
 
-        val psiFile = PsiManager.getInstance(project).findFile(editor.virtualFile)
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
 
         val link = CommentUtils.wrapInComment(psiFile, editor, "[MermaidChart: $chartId]")
 
