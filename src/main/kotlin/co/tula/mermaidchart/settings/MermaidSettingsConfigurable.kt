@@ -1,5 +1,6 @@
 package co.tula.mermaidchart.settings
 
+import co.tula.mermaidchart.utils.MessageProvider.message
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
@@ -12,7 +13,7 @@ class MermaidSettingsConfigurable : Configurable {
 
     @Nls(capitalization = Nls.Capitalization.Title)
     override fun getDisplayName(): String {
-        return "MermaidCharts"
+        return message("settings.name")
     }
 
     override fun getPreferredFocusedComponent(): JComponent? {
@@ -26,25 +27,21 @@ class MermaidSettingsConfigurable : Configurable {
     }
 
     override fun isModified(): Boolean {
-        return view?.let {
-            it.getToken() != MermaidSettings.token
-                    || it.getBaseUrl() != MermaidSettings.baseUrl
-        } ?: false
+        return view?.getPanel()?.isModified() ?: false
     }
 
     override fun apply() {
         view?.let {
-            MermaidSettings.token = it.getToken()
-            MermaidSettings.baseUrl = it.getBaseUrl()
+            it.getPanel().apply()
+
+            MermaidSettings.token = it.token
+            MermaidSettings.baseUrl = it.baseUrl
         }
         ApplicationManager.getApplication().messageBus.syncPublisher(MermaidSettingsTopic.TOPIC).onSettingsChange()
     }
 
     override fun reset() {
-        view?.let {
-            it.setToken(MermaidSettings.token)
-            it.setBaseUrl(MermaidSettings.baseUrl)
-        }
+        return view?.getPanel()?.reset() ?: Unit
     }
 
     override fun disposeUIResources() {

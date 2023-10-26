@@ -5,6 +5,7 @@ import co.tula.mermaidchart.data.DiagramTheme
 import co.tula.mermaidchart.settings.MermaidSettings
 import co.tula.mermaidchart.utils.EitherE
 import co.tula.mermaidchart.utils.Left
+import co.tula.mermaidchart.utils.MessageProvider.message
 import co.tula.mermaidchart.utils.Right
 import co.tula.mermaidchart.utils.extensions.withApi
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -57,7 +58,7 @@ object DiagramDownloader {
                 fos.close()
             }
 
-            val task = object : Task.Backgroundable(project, "Diagram Downloading") {
+            val task = object : Task.Backgroundable(project, message("downloadService.title")) {
                 override fun run(indicator: ProgressIndicator) {
                     indicator.isIndeterminate = true
                     runBlocking(exceptionHandler) {

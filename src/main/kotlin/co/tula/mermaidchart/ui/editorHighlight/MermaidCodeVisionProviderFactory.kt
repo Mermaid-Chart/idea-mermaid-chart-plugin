@@ -6,6 +6,7 @@ import co.tula.mermaidchart.data.DiagramFormat
 import co.tula.mermaidchart.services.DiagramDownloader
 import co.tula.mermaidchart.utils.Left
 import co.tula.mermaidchart.utils.MermaidLink
+import co.tula.mermaidchart.utils.MessageProvider.message
 import co.tula.mermaidchart.utils.Right
 import co.tula.mermaidchart.utils.extensions.withApi
 import co.tula.mermaidchart.utils.mermaidLinks
@@ -38,21 +39,19 @@ class MermaidCodeVisionProviderFactory : CodeVisionProviderFactory {
     }
 }
 
-//TODO: Fix display in Inlay Hints settings
-
 class MermaidActionCodeVisionViewProvider(
     private val project: Project
 ) : CodeVisionProvider<Unit> {
     val scope = CoroutineScope(Dispatchers.Default)
 
     override val groupId: String
-        get() = "mermaidcharts"
+        get() = message("codeVision.group.id")
     override val defaultAnchor: CodeVisionAnchorKind
         get() = CodeVisionAnchorKind.Top
     override val id: String
         get() = MermaidActionCodeVisionViewProvider::class.java.canonicalName
     override val name: String
-        get() = "Mermaid View Action Code Vision"
+        get() = message("codeVision.view.title")
     override val relativeOrderings: List<CodeVisionRelativeOrdering>
         get() = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingFirst)
 
@@ -85,20 +84,20 @@ class MermaidActionCodeVisionViewProvider(
         fun showError(msg: String) {
             runInEdt {
                 NotificationGroupManager.getInstance()
-                    .getNotificationGroup("MermaidCharts")
-                    .createNotification("Mermaid Charts", msg, NotificationType.ERROR)
+                    .getNotificationGroup("mermaidcharts.notificationGroup")
+                    .createNotification(message("notification.title"), msg, NotificationType.ERROR)
                     .notify(editor.project)
             }
         }
-        return makeEntry("View Diagram", id) { _, _ ->
+        return makeEntry(message("codeVision.view.entry.title"), id) { _, _ ->
             scope.launch {
                 when (val diagram = DiagramDownloader(project, link.documentId, DiagramFormat.PNG)) {
-                    is Left -> showError("Can't download file")
+                    is Left -> showError(message("errors.fileDownloadFail"))
 
                     is Right -> {
                         val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(diagram.v)
                         if (virtualFile == null) {
-                            showError("Can't find downloaded file")
+                            showError(message("errors.virtualFileNotFound"))
                             return@launch
                         }
 
@@ -116,13 +115,13 @@ class MermaidActionCodeVisionEditProvider(
     private val project: Project
 ) : CodeVisionProvider<Unit> {
     override val groupId: String
-        get() = "mermaidcharts"
+        get() = message("codeVision.group.id")
     override val defaultAnchor: CodeVisionAnchorKind
         get() = CodeVisionAnchorKind.Top
     override val id: String
         get() = MermaidActionCodeVisionEditProvider::class.java.canonicalName
     override val name: String
-        get() = "Mermaid Edit Action Code Vision"
+        get() = message("codeVision.edit.title")
     override val relativeOrderings: List<CodeVisionRelativeOrdering>
         get() = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingLast)
 
@@ -143,7 +142,7 @@ class MermaidActionCodeVisionEditProvider(
 
 
                 links.forEach { link ->
-                    val editEntry = makeEntry("Edit Diagram", id) { _, _ ->
+                    val editEntry = makeEntry(message("codeVision.edit.entry.title"), id) { _, _ ->
                         project.withApi {
                             BrowserUtil.open(it.editUrl(link.documentId))
                         }

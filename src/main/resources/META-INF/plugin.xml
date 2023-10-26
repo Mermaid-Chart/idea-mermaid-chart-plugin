@@ -13,7 +13,7 @@
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
-    <description>Description Stub Description Stub Description Stub Description Stub </description>
+    <description>Description Stub Description Stub Description Stub Description Stub</description>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -24,19 +24,31 @@
     <extensions defaultExtensionNs="com.intellij">
         <httpRequestHandler implementation="co.tula.mermaidchart.services.OAuthCallbackHandlerService"/>
 
-        <toolWindow factoryClass="co.tula.mermaidchart.ui.projectBrowser.ProjectWindowFactory" id="MermaidChart" anchor="left" secondary="false" icon="co.tula.mermaidchart.ui.Icons.Mermaid"/>
-        
-        <codeInsight.codeVisionProviderFactory implementation="co.tula.mermaidchart.ui.editorHighlight.MermaidCodeVisionProviderFactory"/>
-        <annotator language="" implementationClass="co.tula.mermaidchart.ui.editorHighlight.MermaidCommentAnnotator" order="first"/>
+        <toolWindow factoryClass="co.tula.mermaidchart.ui.projectBrowser.ProjectWindowFactory"
+                    id="Mermaid Charts"
+                    anchor="left"
+                    secondary="false"
+                    icon="co.tula.mermaidchart.ui.Icons.Mermaid"/>
 
-        <applicationConfigurable parentId="tools" instance="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
+        <codeInsight.codeVisionProviderFactory
+                implementation="co.tula.mermaidchart.ui.editorHighlight.MermaidCodeVisionProviderFactory"/>
+        <annotator language=""
+                   implementationClass="co.tula.mermaidchart.ui.editorHighlight.MermaidCommentAnnotator"
+                   order="first"/>
+
+        <applicationConfigurable parentId="tools"
+                                 instance="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
                                  id="co.tula.mermaidchart.settings.MermaidSettingsConfigurable"
-                                 displayName="MermaidCharts"/>
+                                 bundle="i18n.messages"
+                                 key="settings.name"/>
 
-        <notificationGroup id="MermaidCharts"
-                           displayType="BALLOON"/>
+        <notificationGroup id="mermaidcharts.notificationGroup"
+                           displayType="BALLOON"
+                           bundle="i18n.messages"
+                           key="notification.group.name"/>
 
-        <config.codeVisionGroupSettingProvider implementation="co.tula.mermaidchart.settings.MermaidCodeVisionSettingsProvider"/>
+        <config.codeVisionGroupSettingProvider
+                implementation="co.tula.mermaidchart.settings.MermaidCodeVisionSettingsProvider"/>
 
     </extensions>
 </idea-plugin>

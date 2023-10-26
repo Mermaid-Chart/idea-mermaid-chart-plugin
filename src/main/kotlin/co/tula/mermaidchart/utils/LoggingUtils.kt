@@ -11,7 +11,7 @@ fun Project.notifyError(content: String, e: Throwable) {
     thisLogger().warn(content, e)
 
     val notification = NotificationGroupManager.getInstance()
-        .getNotificationGroup("MermaidCharts")
+        .getNotificationGroup("mermaidcharts.notificationGroup")
         .createNotification(content, NotificationType.ERROR)
 
     ActionManager.getInstance().getAction("OpenLog")?.also {

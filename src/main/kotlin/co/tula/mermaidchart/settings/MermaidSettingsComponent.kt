@@ -1,84 +1,55 @@
 package co.tula.mermaidchart.settings
 
-import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.JBTextField
-import com.intellij.util.ui.FormBuilder
-import java.awt.FlowLayout
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import co.tula.mermaidchart.utils.MessageProvider.message
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 
 class MermaidSettingsComponent() {
 
-    private var panel: JPanel
-    private val tokenInput = JBPasswordField()
-    private val baseUrlInput = JBTextField()
+    private var panel: DialogPanel
+    var token = MermaidSettings.token
+        set(value) {
+            hintVisible.set(value.isEmpty())
+            field = value
+        }
+    var baseUrl = MermaidSettings.baseUrl
+
+    private var hintVisible = AtomicBooleanProperty(token.isNotEmpty())
+
+    private lateinit var tokenInput: Cell<JComponent>
 
     init {
+        panel = buildPanel()
+    }
 
-        panel = FormBuilder.createFormBuilder()
-            .also { builder ->
-                if(MermaidSettings.baseUrl == MermaidSettings.BASE_URL_DEFAULT) {
-                    builder.addComponent(buildHint())
-                }
+    private fun buildPanel(): DialogPanel {
+        return panel {
+            row {
+                label(message("settings.labels.tokenHintLink") + ": ")
+                val link = "${MermaidSettings.BASE_URL_DEFAULT}/app/user/settings"
+                browserLink(link, link)
+            }.visibleIf(hintVisible)
+
+            row(message("settings.labels.token") + ": ") {
+                tokenInput = passwordField().bindText(::token).widthGroup("input")
             }
-            .addLabeledComponent(JBLabel("Token: "), tokenInput, 1, false)
-            .addLabeledComponent(JBLabel("Base url: "), baseUrlInput, 1, false)
-            .addComponentFillVertically(JPanel(), 0)
-            .panel
+
+            row(message("settings.labels.baseUrl") + ": ") {
+                textField().bindText(::baseUrl).widthGroup("input")
+            }
+        }
     }
 
-    private fun buildHint(): JPanel {
-        val tokenUrl = "${MermaidSettings.BASE_URL_DEFAULT}/app/user/settings"
-        val container = JPanel()
-        container.layout = FlowLayout()
-
-        container.add(JBLabel("You can get token here: "))
-        container.add(JBLabel(tokenUrl).apply {
-            foreground = EditorColorsManager.getInstance()
-                .schemeForCurrentUITheme
-                .getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
-                .foregroundColor
-
-            this.addMouseListener(object : MouseAdapter() {
-                override fun mouseClicked(e: MouseEvent?) {
-                    super.mouseClicked(e)
-                    BrowserUtil.open(tokenUrl)
-                }
-            })
-        })
-
-        return container
-    }
-
-    fun getPanel(): JPanel {
+    fun getPanel(): DialogPanel {
         return panel
     }
 
     fun getPreferredFocusedComponent(): JComponent {
-        return tokenInput
+        return tokenInput.component
     }
-
-    fun getToken(): String {
-        return tokenInput.text
-    }
-
-    fun setToken(newText: String) {
-        tokenInput.setText(newText)
-    }
-
-    fun getBaseUrl(): String {
-        return baseUrlInput.getText()
-    }
-
-    fun setBaseUrl(newText: String) {
-        baseUrlInput.setText(newText)
-    }
-
 }

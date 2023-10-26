@@ -6,6 +6,7 @@ import co.tula.mermaidchart.settings.MermaidSettingsListener
 import co.tula.mermaidchart.settings.MermaidSettingsTopic
 import co.tula.mermaidchart.utils.CommentUtils
 import co.tula.mermaidchart.utils.Left
+import co.tula.mermaidchart.utils.MessageProvider.message
 import co.tula.mermaidchart.utils.Right
 import co.tula.mermaidchart.utils.extensions.isUnauthorized
 import co.tula.mermaidchart.utils.extensions.withApi
@@ -85,7 +86,7 @@ class ProjectBrowserPanel(
         }
     }
 
-    private fun rootNode(): DefaultMutableTreeNode = DefaultMutableTreeNode("Projects")
+    private fun rootNode(): DefaultMutableTreeNode = DefaultMutableTreeNode(message("projects.list.project"))
 
     private fun buildTree(data: List<ProjectWithDocuments>): TreeModel {
         val rootNode = rootNode()
@@ -94,7 +95,7 @@ class ProjectBrowserPanel(
             .map { (project, documents) ->
                 val node = DefaultMutableTreeNode(project.title)
                 documents
-                    .map { DocumentTreeNode(it.title ?: "Untitled Diagram", it.documentId) }
+                    .map { DocumentTreeNode(it.title ?: message("projects.list.untitled"), it.documentId) }
                     .forEach { node.add(it) }
                 node
             }
@@ -105,7 +106,7 @@ class ProjectBrowserPanel(
 
     private fun buildLoadingTree(): TreeModel {
         val projects = rootNode()
-        val loadingNode = LoadingNode("Loading")
+        val loadingNode = LoadingNode(message("projects.list.loading"))
 
         projects.add(loadingNode)
 
@@ -193,13 +194,13 @@ class ProjectBrowserPanel(
 
 
                     val (description, link) = if (exception is HttpRequests.HttpStatusException && exception.isUnauthorized) {
-                        "Failed: Unauthorized. " to "Open Settings"
+                        message("projects.list.error.unauthorized") to message("projects.list.openSettings")
                     } else {
-                        "Failed. " to "Click to Refresh"
+                        message("projects.list.error.common") to message("projects.list.refresh")
                     }
                     presentation.addText(
                         ColoredFragment(
-                            description,
+                            "$description ",
                             SimpleTextAttributes.fromTextAttributes(defaultTextColor)
                         )
                     )
@@ -242,7 +243,7 @@ class ProjectBrowserPanel(
 }
 
 private class SettingsAction(private val project: Project) :
-    AnAction("Settings", null, AllIcons.General.GearPlain) {
+    AnAction(message("actions.settings.title"), null, AllIcons.General.GearPlain) {
 
     override fun actionPerformed(e: AnActionEvent) {
         openSettings(project)
