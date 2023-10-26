@@ -17,4 +17,6 @@ The Mermaid Chart extension for IntelliJ IDEA seamlessly integrates with the Mer
 1. Import project to IntelliJ IDEA
 2. Run "Execute Gradle Task" (you can find it by pressing Shift+Shift or in Gradle tab to the right of editor)
 3. Run "gradle buildPlugin"
-4. Then the plugin .zip can be found in $PROJECT_FOLDER/build/distribution folder 
+4. Then the plugin .zip can be found in $PROJECT_FOLDER/build/distribution folder
+
+* In case of any troubles try to Invalidate Caches and Restart 
