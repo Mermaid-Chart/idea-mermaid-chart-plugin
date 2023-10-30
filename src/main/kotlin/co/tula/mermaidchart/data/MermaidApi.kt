@@ -4,13 +4,10 @@ import co.tula.mermaidchart.data.models.Document
 import co.tula.mermaidchart.data.models.Project
 import co.tula.mermaidchart.data.models.ProjectWithDocuments
 import co.tula.mermaidchart.data.models.User
-import co.tula.mermaidchart.ui.projectBrowser.ProjectBrowserPanel
 import co.tula.mermaidchart.utils.EitherE
 import co.tula.mermaidchart.utils.Left
 import co.tula.mermaidchart.utils.Right
-import co.tula.mermaidchart.utils.bind
 import com.fasterxml.jackson.annotation.JsonValue
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.HttpRequests.HttpStatusException
 import io.ktor.client.*
 import io.ktor.client.engine.java.*
@@ -19,8 +16,6 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import org.slf4j.LoggerFactory
-import java.nio.channels.UnresolvedAddressException
 
 enum class DiagramTheme(
     @JsonValue val theme: String
@@ -70,12 +65,14 @@ class MermaidApi(
 
     suspend fun projects(): EitherE<List<Project>> = wrapGetResult("$baseUrl/rest-api/projects")
 
-    suspend fun documents(projectId: String): EitherE<List<Document>> = wrapGetResult("$baseUrl/rest-api/projects/$projectId/documents")
+    suspend fun documents(projectId: String): EitherE<List<Document>> =
+        wrapGetResult("$baseUrl/rest-api/projects/$projectId/documents")
 
-    suspend fun document(documentId: String): EitherE<Document> = wrapGetResult("$baseUrl/rest-api/documents/$documentId")
+    suspend fun document(documentId: String): EitherE<Document> =
+        wrapGetResult("$baseUrl/rest-api/documents/$documentId")
 
     suspend inline fun <reified T> String.httpGet(vararg param: Pair<String, String>): T {
-        return json.decodeFromString(httpRaw(*param))
+        return json.decodeFromString(httpRaw(*param).also { println(it) })
     }
 
     suspend fun String.httpRaw(vararg param: Pair<String, String>): String {
@@ -86,7 +83,7 @@ class MermaidApi(
             }
         }
         val httpResponse = ktorClient.request(request)
-        if(!httpResponse.status.isSuccess()){
+        if (!httpResponse.status.isSuccess()) {
             throw HttpStatusException("Wrong response code", httpResponse.status.value, request.url.buildString())
         }
         return httpResponse.bodyAsText()
@@ -104,12 +101,12 @@ class MermaidApi(
     private suspend inline fun <reified T> wrapGetResult(url: String): EitherE<T> {
         return try {
             Right(url.httpGet<T>())
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Left(MermaidApiException(url, e))
         }
     }
 
-    class MermaidApiException(url: String, cause: Exception): Exception("Failed to request: $url", cause)
+    class MermaidApiException(url: String, cause: Exception) : Exception("Failed to request: $url", cause)
 
     companion object {
         private val ktorClient = HttpClient(Java)

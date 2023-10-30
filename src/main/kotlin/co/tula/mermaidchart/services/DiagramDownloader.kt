@@ -24,6 +24,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.FileOutputStream
+import java.time.OffsetDateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -43,7 +44,7 @@ object DiagramDownloader {
             ((document as Right).v) to it.viewUrl(document.v, theme, format)
         }
 
-        val tempFile = File(tempDir, "MermaidChart_${diagramId}_v${document.major}_${document.minor}.${format.format}")
+        val tempFile = File(tempDir, "MermaidChart_${diagramId}_${document.updateTime.toFileSuffix()}.${format.format}")
 
         if (tempFile.exists()) {
             return Right(tempFile)
@@ -79,4 +80,14 @@ object DiagramDownloader {
             task.queue()
         }
     }
+
+    private fun OffsetDateTime.toFileSuffix(): String {
+        val date = "$year$monthValue${dayOfMonth}"
+        val time = "${padTimeInt(hour)}${padTimeInt(minute)}${padTimeInt(second)}"
+        return "$date$time"
+    }
+
+    private fun padTimeInt(v: Int): String =
+        v.toString().padStart(2, '0')
+
 }
