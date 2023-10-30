@@ -24,7 +24,6 @@ import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.options.ShowSettingsUtil
@@ -33,7 +32,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
 import com.intellij.ui.LoadingNode
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.treeStructure.Tree
@@ -66,7 +64,11 @@ class ProjectBrowserPanel(
 
         browser.addMouseListener(clickListener)
 
-        setToolbar(buildToolbar())
+        setToolbar(
+            buildToolbar(
+                onRefresh = { refresh(true) }
+            )
+        )
         setContent(browser)
 
         ApplicationManager.getApplication()
@@ -77,10 +79,10 @@ class ProjectBrowserPanel(
         refresh()
     }
 
-    private fun buildToolbar(): ActionToolbarImpl {
+    private fun buildToolbar(onRefresh: () -> Unit): ActionToolbarImpl {
         val actions = object : ActionGroup() {
             override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-                return arrayOf(SettingsAction(project))
+                return arrayOf(RefreshAction(onRefresh), SettingsAction(project))
             }
         }
         return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true).apply {
@@ -124,11 +126,11 @@ class ProjectBrowserPanel(
         return DefaultTreeModel(projects)
     }
 
-    private fun refresh(afterError: Boolean = false) {
+    private fun refresh(withDelay: Boolean = false) {
         browser?.model = buildLoadingTree()
         refreshJob?.cancel()
         refreshJob = scope.launch {
-            if(afterError){
+            if (withDelay) {
                 delay(500)
             }
             project.withApi { api ->
@@ -137,6 +139,7 @@ class ProjectBrowserPanel(
                         project.notifyError(projects.v.localizedMessage, projects.v)
                         browser?.model = buildFailedTree(projects.v)
                     }
+
                     is Right -> browser?.model = buildTree(projects.v)
                 }
             }
@@ -249,6 +252,14 @@ private class SettingsAction(private val project: Project) :
 
     override fun actionPerformed(e: AnActionEvent) {
         openSettings(project)
+    }
+}
+
+private class RefreshAction(private val onClick: () -> Unit) :
+    AnAction(message("actions.refresh.title"), null, AllIcons.Actions.Refresh) {
+
+    override fun actionPerformed(e: AnActionEvent) {
+        onClick()
     }
 }
 

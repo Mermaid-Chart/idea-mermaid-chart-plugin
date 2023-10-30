@@ -72,7 +72,7 @@ class MermaidApi(
         wrapGetResult("$baseUrl/rest-api/documents/$documentId")
 
     suspend inline fun <reified T> String.httpGet(vararg param: Pair<String, String>): T {
-        return json.decodeFromString(httpRaw(*param).also { println(it) })
+        return json.decodeFromString(httpRaw(*param))
     }
 
     suspend fun String.httpRaw(vararg param: Pair<String, String>): String {
