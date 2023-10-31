@@ -63,7 +63,7 @@ class MermaidApi(
             .let { Right(it) }
     }
 
-    suspend fun projects(): EitherE<List<Project>> = wrapGetResult("$baseUrl/rest-api/projects")
+    suspend fun projects(): EitherE<List<Project>> = wrapGetResult("$baseUrl/rest-api/projects?ref=idea")
 
     suspend fun documents(projectId: String): EitherE<List<Document>> =
         wrapGetResult("$baseUrl/rest-api/projects/$projectId/documents")
