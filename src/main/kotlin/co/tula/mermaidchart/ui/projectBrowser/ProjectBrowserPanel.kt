@@ -39,6 +39,7 @@ import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
@@ -126,8 +127,14 @@ class ProjectBrowserPanel(
         return DefaultTreeModel(projects)
     }
 
+    private fun updateBrowserModel(model: TreeModel) {
+        SwingUtilities.invokeLater {
+            browser?.model = model
+        }
+    }
+
     private fun refresh(withDelay: Boolean = false) {
-        browser?.model = buildLoadingTree()
+        updateBrowserModel(buildLoadingTree())
         refreshJob?.cancel()
         refreshJob = scope.launch {
             if (withDelay) {
@@ -137,10 +144,10 @@ class ProjectBrowserPanel(
                 when (val projects = api.projectsWithDocuments()) {
                     is Left -> {
                         project.notifyError(projects.v.localizedMessage, projects.v)
-                        browser?.model = buildFailedTree(projects.v)
+                        updateBrowserModel(buildFailedTree(projects.v))
                     }
 
-                    is Right -> browser?.model = buildTree(projects.v)
+                    is Right -> updateBrowserModel(buildTree(projects.v))
                 }
             }
         }

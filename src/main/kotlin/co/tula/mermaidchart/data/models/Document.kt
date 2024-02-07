@@ -7,7 +7,6 @@ import java.time.OffsetDateTime
 
 @Serializable
 data class Document(
-    @SerialName("id") val id: String,
     @SerialName("title") val title: String?,
     @SerialName("major") val major: Int,
     @SerialName("minor") val minor: Int,

@@ -8,6 +8,7 @@ import co.tula.mermaidchart.utils.EitherE
 import co.tula.mermaidchart.utils.Left
 import co.tula.mermaidchart.utils.Right
 import com.fasterxml.jackson.annotation.JsonValue
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.HttpRequests.HttpStatusException
 import io.ktor.client.*
 import io.ktor.client.engine.java.*
@@ -72,7 +73,9 @@ class MermaidApi(
         wrapGetResult("$baseUrl/rest-api/documents/$documentId")
 
     suspend inline fun <reified T> String.httpGet(vararg param: Pair<String, String>): T {
-        return json.decodeFromString(httpRaw(*param))
+        val raw = httpRaw(*param)
+        thisLogger().debug("!!!$raw")
+        return json.decodeFromString(raw)
     }
 
     suspend fun String.httpRaw(vararg param: Pair<String, String>): String {
