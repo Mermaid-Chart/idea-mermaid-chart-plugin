@@ -74,7 +74,6 @@ class MermaidApi(
 
     suspend inline fun <reified T> String.httpGet(vararg param: Pair<String, String>): T {
         val raw = httpRaw(*param)
-        thisLogger().debug("!!!$raw")
         return json.decodeFromString(raw)
     }
 
