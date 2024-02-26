@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "co.tula.mermaidchart"
-version = "1.1.3"
+version = "1.1.4"
 
 repositories {
     mavenCentral()
@@ -41,6 +41,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("223")
+        untilBuild.set("233.*")
     }
 
     signPlugin {
