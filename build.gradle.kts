@@ -30,7 +30,6 @@ dependencies {
 }
 
 val paramSinceBuild = "223"
-val paramUntilBuild = "242.*"
 
 intellijPlatform {
     version = "1.1.7"
@@ -38,7 +37,7 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = paramSinceBuild
-            untilBuild = paramUntilBuild
+            untilBuild = provider { null }
         }
     }
 
@@ -48,12 +47,7 @@ intellijPlatform {
                 types = listOf(IntelliJPlatformType.IntellijIdeaCommunity)
                 channels = listOf(ProductRelease.Channel.RELEASE)
                 sinceBuild = paramSinceBuild
-                /*
-                    https://github.com/JetBrains/intellij-platform-gradle-plugin/issues/1719
-                    Testing against 242.* is impossible at the moment
-                    TODO: Update "241.*" to paramUntilBuild once issue will be fixed
-                 */
-                untilBuild = "241.*"
+                untilBuild = provider { null }
             }
         }
     }
