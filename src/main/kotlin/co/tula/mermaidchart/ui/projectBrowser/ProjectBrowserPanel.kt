@@ -14,10 +14,7 @@ import co.tula.mermaidchart.utils.notifyError
 import com.intellij.icons.AllIcons
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
@@ -65,11 +62,9 @@ class ProjectBrowserPanel(
 
         browser.addMouseListener(clickListener)
 
-        setToolbar(
-            buildToolbar(
-                onRefresh = { refresh(true) }
-            )
-        )
+        toolbar = buildToolbar(
+            onRefresh = { refresh(true) }
+        ).component
         setContent(browser)
 
         ApplicationManager.getApplication()
@@ -80,14 +75,14 @@ class ProjectBrowserPanel(
         refresh()
     }
 
-    private fun buildToolbar(onRefresh: () -> Unit): ActionToolbarImpl {
+    private fun buildToolbar(onRefresh: () -> Unit): ActionToolbar {
         val actions = object : ActionGroup() {
             override fun getChildren(e: AnActionEvent?): Array<AnAction> {
                 return arrayOf(RefreshAction(onRefresh), SettingsAction(project))
             }
         }
-        return ActionToolbarImpl(ActionPlaces.TOOLBAR, actions, true).apply {
-            targetComponent = this
+        return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actions, true).apply {
+            targetComponent = this.component
         }
     }
 

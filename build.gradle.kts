@@ -32,7 +32,7 @@ dependencies {
 val paramSinceBuild = "223"
 
 intellijPlatform {
-    version = "1.1.7"
+    version = "1.1.8"
     group = "co.tula.mermaidchart"
     pluginConfiguration {
         ideaVersion {
